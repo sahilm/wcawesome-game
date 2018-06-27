@@ -52,7 +52,7 @@ type RefNotification struct {
 func main() {
 	fifaID := os.Getenv("FIFA_ID")
 	country := os.Getenv("COUNTRY")
-	refURL := "http://wcref.plex-houston.cloudops-eu.cf-app.com:8080"
+	refURL := os.Getenv("REF_URL")
 	resp, err := http.Get("http://worldcup.sfg.io/matches")
 	if err != nil {
 		log.Fatal(err)
@@ -89,6 +89,20 @@ func main() {
 				resp.Body.Close()
 				fmt.Println(refNotification)
 			}
+			refNotification.Country = "GAME_OVER"
+			body, _ := json.Marshal(refNotification)
+			req, err := http.NewRequest("POST", refURL, bytes.NewBuffer(body))
+			if err != nil {
+				fmt.Printf("%s", err)
+			}
+			req.Header.Set("Content-Type", "application/json")
+
+			client := &http.Client{}
+			resp, err := client.Do(req)
+			if err != nil {
+				panic(err)
+			}
+			resp.Body.Close()
 			return
 		}
 	}
