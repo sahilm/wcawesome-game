@@ -41,6 +41,11 @@ type game struct {
 	AwayTeamEvents    []event `json:"away_team_events"`
 }
 
+type RefNotification struct {
+	Country string `json:"country"`
+	Event event `json:"event"`
+}
+
 func main() {
 	fifaID := os.Getenv("FIFA_ID")
 	country := os.Getenv("COUNTRY")
@@ -57,34 +62,31 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	var refNotification RefNotification
 
-	for g := range games {
-		ok, homeOrAway := isHomeOrAway(country, games[g].HomeTeam.Country, games[g].AwayTeam.Country)
-		if games[g].FifaId == fifaID && ok {
-			fmt.Printf(games[g].Status + " " + homeOrAway)
-			if homeOrAway == "home" {
-				for i := range games[g].HomeTeamEvents {
-					println(games[g].HomeTeamEvents[i].TypeOfEvent)
-					time.Sleep(1 * time.Second)
-				}
-
-			} else {
-				for i := range games[g].AwayTeamEvents {
-					println(games[g].AwayTeamEvents[i].TypeOfEvent)
-					time.Sleep(1 * time.Second)
-				}
+	for i := range games {
+		e := events(country, games[i], fifaID)
+		if e != nil {
+			for j := range e {
+				refNotification.Country = country
+				refNotification.Event = e[j]
+				fmt.Println(refNotification)
+				time.Sleep(1 * time.Second)
 			}
 		}
 	}
 }
 
-func isHomeOrAway(country string, home string, away string) (bool, string) {
+func events(country string, g game, fifaID string) ([]event) {
+	if fifaID != g.FifaId {
+		return nil
+	}
 	switch country {
-	case home:
-		return true, "home"
-	case away:
-		return true, "away"
+	case g.HomeTeam.Country:
+		return g.HomeTeamEvents
+	case g.AwayTeam.Country:
+		return g.AwayTeamEvents
 	default:
-		return false, ""
+		return nil
 	}
 }
