@@ -10,6 +10,7 @@ import (
 	"time"
 	"strings"
 	"strconv"
+	"bytes"
 )
 
 type team struct {
@@ -51,8 +52,8 @@ type RefNotification struct {
 func main() {
 	fifaID := os.Getenv("FIFA_ID")
 	country := os.Getenv("COUNTRY")
-	url := "http://worldcup.sfg.io/matches"
-	resp, err := http.Get(url)
+	refURL := "http://wcref.plex-houston.cloudops-eu.cf-app.com:8080"
+	resp, err := http.Get("http://worldcup.sfg.io/matches")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -70,11 +71,25 @@ func main() {
 		e := events(country, games[i], fifaID)
 		if e != nil {
 			for j := range e {
-				time.Sleep(time.Duration(interval(e, j, j-1)) * 100 * time.Millisecond)
+				time.Sleep(time.Duration(interval(e, j, j-1)) * 200 * time.Millisecond)
 				refNotification.Country = country
 				refNotification.Event = e[j]
+				body, _ := json.Marshal(refNotification)
+				req, err := http.NewRequest("POST", refURL, bytes.NewBuffer(body))
+				if err != nil {
+					fmt.Printf("%s", err)
+				}
+				req.Header.Set("Content-Type", "application/json")
+
+				client := &http.Client{}
+				resp, err := client.Do(req)
+				if err != nil {
+					panic(err)
+				}
+				resp.Body.Close()
 				fmt.Println(refNotification)
 			}
+			return
 		}
 	}
 }
