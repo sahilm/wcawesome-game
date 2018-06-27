@@ -47,6 +47,7 @@ type game struct {
 type RefNotification struct {
 	Country string `json:"country"`
 	Event   event  `json:"event"`
+	FifaID string `json:"fifa_id"`
 }
 
 func main() {
@@ -73,6 +74,7 @@ func main() {
 			for j := range e {
 				time.Sleep(time.Duration(interval(e, j, j-1)) * 200 * time.Millisecond)
 				refNotification.Country = country
+				refNotification.FifaID = games[i].FifaId
 				refNotification.Event = e[j]
 				body, _ := json.Marshal(refNotification)
 				req, err := http.NewRequest("POST", refURL, bytes.NewBuffer(body))
