@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+	"strings"
+	"strconv"
 )
 
 type team struct {
@@ -43,7 +45,7 @@ type game struct {
 
 type RefNotification struct {
 	Country string `json:"country"`
-	Event event `json:"event"`
+	Event   event  `json:"event"`
 }
 
 func main() {
@@ -68,13 +70,21 @@ func main() {
 		e := events(country, games[i], fifaID)
 		if e != nil {
 			for j := range e {
+				time.Sleep(time.Duration(interval(e, j, j-1)) * 100 * time.Millisecond)
 				refNotification.Country = country
 				refNotification.Event = e[j]
 				fmt.Println(refNotification)
-				time.Sleep(1 * time.Second)
 			}
 		}
 	}
+}
+
+func interval(e []event, startIndex int, previousIndex int) int {
+	if previousIndex < 0 {
+		return timeparser(e[startIndex].Time)
+	}
+	return timeparser(e[startIndex].Time) - timeparser(e[previousIndex].Time)
+
 }
 
 func events(country string, g game, fifaID string) ([]event) {
@@ -89,4 +99,19 @@ func events(country string, g game, fifaID string) ([]event) {
 	default:
 		return nil
 	}
+}
+
+func timeparser(t string) int {
+	t = strings.Replace(t, "'", "", -1)
+	cleandtime := strings.Split(t, "+")
+	x := 0
+	for i := range cleandtime {
+		intVal, err := strconv.Atoi(cleandtime[i])
+		if err != nil {
+			log.Fatal(err)
+		}
+		x += intVal
+	}
+	return x
+
 }
